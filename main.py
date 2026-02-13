@@ -3,6 +3,8 @@ import argparse
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from prompts import system_prompt
+from functions.call_function import available_functions
 
 def main():
     load_dotenv()
@@ -14,7 +16,14 @@ def main():
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     args = parser.parse_args()
     messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
-    response = client.models.generate_content(model="gemini-2.5-flash", contents=messages)
+    response = client.models.generate_content(
+        model="gemini-2.5-flash", 
+        contents=messages,
+        config=types.GenerateContentConfig(
+            tools=[available_functions],
+            system_instruction=system_prompt
+        )
+    )
     if not response.usage_metadata: raise RuntimeError("Failed API request")
     if args.verbose:
         print(
@@ -22,7 +31,11 @@ def main():
             f"Prompt tokens: {response.usage_metadata.prompt_token_count}\n"
             f"Response tokens: {response.usage_metadata.candidates_token_count}\n"
         )
-    print(response.text)
+    if response.function_calls:
+        for _ in response.function_calls:
+            print(f"Calling function: {_.name}({_.args})")
+    else:
+        print(response.text)
     
 
 if __name__ == "__main__": main()
