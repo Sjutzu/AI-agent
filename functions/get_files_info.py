@@ -14,10 +14,9 @@ def get_files_info(working_directory, directory="."):
             raise Exception(f'"{directory}" is not a directory')
         for element in os.listdir(full_path):
             result += f"\n- {element}: file_size={os.path.getsize(full_path + "/" + element)} bytes, is_dir={os.path.isdir(full_path + "/" + element)}"
-        print(result)
         return result
     except Exception as e:
-        print(f"Error: {e}")
+        return f"Error: {e}"
 
 schema_get_files_info = types.FunctionDeclaration(
     name="get_files_info",
