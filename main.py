@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from prompts import system_prompt
-from functions.call_function import available_functions
+from functions.call_function import available_functions, call_function
 
 def main():
     load_dotenv()
@@ -24,16 +24,20 @@ def main():
             system_instruction=system_prompt
         )
     )
+    function_results = []
     if not response.usage_metadata: raise RuntimeError("Failed API request")
-    if args.verbose:
-        print(
-            f"User prompt: {args.user_prompt}\n"
-            f"Prompt tokens: {response.usage_metadata.prompt_token_count}\n"
-            f"Response tokens: {response.usage_metadata.candidates_token_count}\n"
-        )
     if response.function_calls:
-        for _ in response.function_calls:
-            print(f"Calling function: {_.name}({_.args})")
+        for function_call in response.function_calls:
+            function_call_result = call_function(function_call)
+            if not function_call_result.parts:
+                raise Exception("The function_call_result object should have a non-empty .parts list")
+            if not function_call_result.parts[0].function_response:
+                raise Exception("The function_call_result_parts[0].function_response shouldn't be NONE")
+            if not function_call_result.parts[0].function_response.response:
+                raise Exception("The actual function result shouldn't be NONE")
+            function_results.append(function_call_result.parts[0])
+            if args.verbose:
+                print(f"-> {function_call_result.parts[0].function_response.response}")
     else:
         print(response.text)
     
