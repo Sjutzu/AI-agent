@@ -32,11 +32,11 @@ def call_function(function_call, verbose=False):
     args["working_directory"] = "./calculator"
     function_result = function_map[function_name](**args)
     return types.Content(
-    role="tool",
-    parts=[
-        types.Part.from_function_response(
-            name=function_name,
-            response={"result": function_result},
-        )
-    ],
-)
+        role="tool",
+        parts=[
+            types.Part.from_function_response(
+                name=function_name,
+                response={"result": function_result},
+            )
+        ],
+    )   
